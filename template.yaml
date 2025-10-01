@@ -1,8 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Serverless API for creating VPCs
+Description: SAM template with API Gateway (API Key required), Lambda, and DynamoDB
 
 Resources:
+  ### DynamoDB Table ###
   VPCRecordsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -15,29 +16,86 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
-  VPCLambda:
+  ### API Gateway ###
+  VpcApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'OPTIONS,GET,POST'"
+        AllowHeaders: "'Content-Type,Authorization,x-api-key'"
+        AllowOrigin: "'*'"
+      Auth:
+        ApiKeyRequired: true   # 👈 require API key
+
+  ### Lambda Function ###
+  VpcCreatorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: VPCManager
+      FunctionName: VpcCreatorLambda
       Handler: app.lambda_handler
       Runtime: python3.9
+      CodeUri: .
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: !Ref VPCRecordsTable
+        - Statement:
+            Effect: Allow
+            Action:
+              - ec2:CreateVpc
+              - ec2:ModifyVpcAttribute
+              - ec2:CreateSubnet
+              - ec2:DescribeVpcs
+              - ec2:DescribeSubnets
+            Resource: "*"
       Environment:
         Variables:
           DYNAMODB_TABLE: !Ref VPCRecordsTable
-      Policies:
-        - AmazonEC2FullAccess
-        - DynamoDBCrudPolicy:
-            TableName: !Ref VPCRecordsTable
       Events:
-        CreateVPCAPI:
+        VpcPostEvent:
           Type: Api
           Properties:
-            Path: /create-vpc
+            RestApiId: !Ref VpcApi
+            Path: /vpc
             Method: post
-        GetVPCAPI:
+        VpcGetEvent:
           Type: Api
           Properties:
-            Path: /get-vpc
+            RestApiId: !Ref VpcApi
+            Path: /vpc
             Method: get
 
+  ### API Key ###
+  MyApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Name: MyClientApiKey
+      Enabled: true
+      
 
+  ### Usage Plan ###
+  MyUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      UsagePlanName: VpcApiUsagePlan
+      ApiStages:
+        - ApiId: !Ref VpcApi
+          Stage: prod
+      
+
+  ### Attach API Key to Usage Plan ###
+  MyUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref MyApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref MyUsagePlan
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${VpcApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+  ApiKey:
+    Description: "API Key for accessing the API"
+    Value: !Ref MyApiKey
