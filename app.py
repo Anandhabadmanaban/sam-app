@@ -76,13 +76,8 @@ def respond(status, body):
 
 #Once deployed, note the API Gateway endpoint:
 
-#POST /create-vpc
 
-#GET /get-vpc?vpc_id=<vpc_id>'''
 
-# curl -X POST https://dyc35ookp0.execute-api.us-east-1.amazonaws.com/Prod/create-vpc -H "Content-Type: application/json" -d '{"cidr_block": "10.1.0.0/16", "subnet_cidrs": ["10.1.1.0/24","10.1.2.0/24"]}'
-
- # curl -X POST https://dyc35ookp0.execute-api.us-east-1.amazonaws.com/Prod/create-vpc -H "Content-Type: application/json" -d '{"cidr_block": "10.1.0.0/16", "subnet_cidrs": ["10.1.1.0/24","10.1.2.0/24"]}'
+# curl -X POST -H "x-api-key: PHZlcHHuzo5nDJU9JnspJ8YFXFssOdJM9IFm4aD0" https://l7307iaw3k.execute-api.us-east-1.amazonaws.com/prod/vpc -d '{"cidr_block": "10.1.0.0/16", "subnet_cidrs": ["10.1.1.0/24","10.1.2.0/24"]}'
  
-
-#curl https://dyc35ookp0.execute-api.us-east-1.amazonaws.com/Prod/get-vpc?vpc_id=vpc-xxxxxxxx
+#curl -X GET -H "x-api-key: PHZlcHHuzo5nDJU9JnspJ8YFXFssOdJM9IFm4aD0" https://l7307iaw3k.execute-api.us-east-1.amazonaws.com/prod/vpc?vpc_id=vpc-xxxxxxxxvpc?vpc_id=vpc-xxxxxxxx

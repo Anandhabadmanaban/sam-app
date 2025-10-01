@@ -93,6 +93,13 @@ Resources:
       UsagePlanId: !Ref MyUsagePlan
 
 Outputs:
+  GetReqURL:
+    Description: "GET Request URL"
+    Value: !Sub "curl -X GET -H 'x-api-key:<---TOKEN--->' https://${VpcApi}.execute-api.${AWS::Region}.amazonaws.com/prod/vpc?vpc_id=<---CREATED_VPC_ID--->"
+  PostReqURL:
+    Description: "POST Request URL"
+    Value: !Sub |
+      curl -X POST -H "x-api-key:<---TOKEN--->" https://${VpcApi}.execute-api.${AWS::Region}.amazonaws.com/prod/vpc -d '{"cidr_block": "10.1.0.0/16", "subnet_cidrs": ["10.1.1.0/24","10.1.2.0/24"]}'
   ApiUrl:
     Description: "API Gateway endpoint URL"
     Value: !Sub "https://${VpcApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
