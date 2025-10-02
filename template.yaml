@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: SAM template with API Gateway (API Key required), Lambda, and DynamoDB
 
 Resources:
-  ### DynamoDB Table ###
+  ########################### DynamoDB Table ##################################
   VPCRecordsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -16,7 +16,7 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
-  ### API Gateway ###
+  ############################ API Gateway ##############################################
   VpcApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -24,11 +24,11 @@ Resources:
       Cors:
         AllowMethods: "'OPTIONS,GET,POST'"
         AllowHeaders: "'Content-Type,Authorization,x-api-key'"
-        AllowOrigin: "'*'"
+        AllowOrigin: "'*'"   # allow all origins. If we want to restrict to our own domains then we can specify here
       Auth:
-        ApiKeyRequired: true   # 👈 require API key
+        ApiKeyRequired: true   # require API key. This protects out API from unauthenticated access.
 
-  ### Lambda Function ###
+############################ Lambda Function ##############################################
   VpcCreatorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -66,17 +66,19 @@ Resources:
             Path: /vpc
             Method: get
 
-  ### API Key ###
+  ############################ API Key ##############################################
   MyApiKey:
     Type: AWS::ApiGateway::ApiKey
+    DependsOn: VpcApi
     Properties:
       Name: MyClientApiKey
       Enabled: true
       
 
-  ### Usage Plan ###
+############################ Usage Plan#############################################
   MyUsagePlan:
     Type: AWS::ApiGateway::UsagePlan
+    DependsOn: VpcApi
     Properties:
       UsagePlanName: VpcApiUsagePlan
       ApiStages:
@@ -84,9 +86,10 @@ Resources:
           Stage: prod
       
 
-  ### Attach API Key to Usage Plan ###
+  ############################ Attach API Key to Usage Plan ############################
   MyUsagePlanKey:
     Type: AWS::ApiGateway::UsagePlanKey
+    DependsOn: VpcApi
     Properties:
       KeyId: !Ref MyApiKey
       KeyType: API_KEY
@@ -106,3 +109,6 @@ Outputs:
   ApiKey:
     Description: "API Key for accessing the API"
     Value: !Ref MyApiKey
+  ApiKeycommand:
+    Description: "command to get API Key from aws"
+    Value: !Sub "aws apigateway get-api-key --api-key ${MyApiKey} --include-value --region ${AWS::Region}"

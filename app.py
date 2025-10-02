@@ -18,19 +18,19 @@ def lambda_handler(event, context):
             return get_vpc(event)
         else:
             return respond(400, {"message": "Invalid HTTP method"})
-    except Exception as e:
+    except Exception as e:   #we can use multiple exception block to catch specific exceptions inside child fuction
         return respond(500, {"error": str(e)})
 
 def create_vpc(event):
     data = json.loads(event.get('body', '{}'))
-    cidr_block = data.get('cidr_block', '10.0.0.0/16')
-    subnet_cidrs = data.get('subnet_cidrs', ['10.0.1.0/24', '10.0.2.0/24'])
+    cidr_block = data.get('cidr_block', '10.0.0.0/16') #if not provided, default CIDRs will be used
+    subnet_cidrs = data.get('subnet_cidrs', ['10.0.1.0/24', '10.0.2.0/24'])  #if not provided, default CIDRs will be used
     
     # Create VPC
     vpc_resp = ec2.create_vpc(CidrBlock=cidr_block)
     vpc_id = vpc_resp['Vpc']['VpcId']
     
-    # Enable DNS Hostnames
+    # Enable DNS Hostnames optional 
     ec2.modify_vpc_attribute(VpcId=vpc_id, EnableDnsHostnames={'Value': True})
     
     # Create subnets
@@ -65,7 +65,7 @@ def get_vpc(event):
     
     return respond(200, resp['Item'])
 
-def respond(status, body):
+def respond(status, body):   #created for exception handling and consistent response structure
     return {
         'statusCode': status,
         'body': json.dumps(body),
@@ -74,10 +74,7 @@ def respond(status, body):
 
 
 
-#Once deployed, note the API Gateway endpoint:
-
-
-
+# Example curl commands to test the API Gateway endpoints with API Key authentication
 # curl -X POST -H "x-api-key: PHZlcHHuzo5nDJU9JnspJ8YFXFssOdJM9IFm4aD0" https://l7307iaw3k.execute-api.us-east-1.amazonaws.com/prod/vpc -d '{"cidr_block": "10.1.0.0/16", "subnet_cidrs": ["10.1.1.0/24","10.1.2.0/24"]}'
  
 #curl -X GET -H "x-api-key: PHZlcHHuzo5nDJU9JnspJ8YFXFssOdJM9IFm4aD0" https://l7307iaw3k.execute-api.us-east-1.amazonaws.com/prod/vpc?vpc_id=vpc-xxxxxxxxvpc?vpc_id=vpc-xxxxxxxx
